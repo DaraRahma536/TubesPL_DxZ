@@ -1,0 +1,263 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import os
+from google.colab import drive
+drive.mount('/content/drive')
+
+dataset=pd.read_excel('/content/drive/MyDrive/ProgLanjut/Dataset_BRI.xlsx')
+display(dataset)
+
+
+
+# Mengonversi kolom Date menjadi tipe datetime
+dataset['Date'] = pd.to_datetime(dataset['Date'], errors='coerce')
+
+# Menentukan rentang tanggal dari tanggal paling awal hingga paling akhir dalam data
+start_date = dataset['Date'].min()
+end_date = dataset['Date'].max()
+
+# Membuat daftar semua tanggal dalam rentang tersebut
+all_dates = pd.date_range(start=start_date, end=end_date, freq='D')
+
+# Menambahkan tanggal yang hilang dengan mengisi data kosong
+dataset_full = dataset.set_index('Date').reindex(all_dates).reset_index()
+
+# Mengganti nama kolom tanggal kembali menjadi 'Date'
+dataset_full.rename(columns={'index': 'Date'}, inplace=True)
+
+# Menampilkan hasil setelah menambahkan tanggal yang hilang
+#dataset_full.head(10)
+display(dataset_full)
+
+
+
+# prompt: Hapus kolom Net Worth dari dataset diatas
+
+# Drop the 'Net Worth' column
+dataset_full = dataset_full.drop('Net Worth', axis=1)
+dataset_full = dataset_full.drop('Close', axis=1)
+dataset_full = dataset_full.drop('High', axis=1)
+dataset_full = dataset_full.drop('Low', axis=1)
+dataset_full = dataset_full.drop('Open', axis=1)
+
+# Display the modified dataset
+display(dataset_full)
+
+
+
+def fill_nan_with_mean(series):
+    return series.interpolate(method='linear', limit_direction='both')
+
+dataset_fix = dataset_full.apply(fill_nan_with_mean, axis=0)
+
+display(dataset_fix)
+print("\n",dataset_fix.isnull().sum())
+
+
+
+# Plotting grafik
+plt.figure(figsize=(12, 6))
+plt.plot(dataset_fix['Date'], dataset_fix['open'], label='Open', color='blue')
+plt.plot(dataset_fix['Date'], dataset_fix['low'], label='Low', color='red')
+plt.plot(dataset_fix['Date'], dataset_fix['high'], label='High', color='green')
+plt.plot(dataset_fix['Date'], dataset_fix['close'], label='Close', color='black')
+plt.xlabel('Date')
+plt.ylabel('Value')
+plt.title('Value Over Time')
+plt.grid(True)
+plt.show()
+
+
+
+# Model Regresi Linear Parameter High
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+X1 = dataset_fix[['high']]
+y1 = dataset_fix['close']
+
+
+# Split data into training and testing sets
+X1_train, X1_test, y1_train, y1_test = train_test_split(X1, y1, test_size=0.2, random_state=42)
+
+# Create and train the linear regression model
+model1 = LinearRegression()
+model1.fit(X1_train, y1_train)
+
+# Make predictions on the test set
+y1_pred = model1.predict(X1_test)
+
+# Evaluate the model
+mse1 = mean_squared_error(y1_test, y1_pred)
+r21 = r2_score(y1_test, y1_pred)
+
+print(f"Mean Squared Error: {mse1}")
+print(f"R-squared: {r21}")
+
+coeff_linreg1=model1.coef_[0]
+intercept_linreg1=model1.intercept_
+
+
+# Plot Grafik
+plt.figure(figsize=(10, 6))
+plt.scatter(y1_test, y1_pred, alpha=0.5)
+plt.plot([min(y1_test), max(y1_test)], [min(y1_test), max(y1_test)], color='red')
+
+plt.xlabel('Actual Close Price')
+plt.ylabel('Predicted Close Price')
+plt.title('High')
+plt.grid(True)
+plt.show()
+
+
+
+# Model Regresi Linear Parameter Low
+X2 = dataset_fix[['low']]
+y2 = dataset_fix['close']
+
+
+# Split data into training and testing sets
+X2_train, X2_test, y2_train, y2_test = train_test_split(X2, y2, test_size=0.2, random_state=42)
+
+# Create and train the linear regression model
+model2 = LinearRegression()
+model2.fit(X2_train, y2_train)
+
+# Make predictions on the test set
+y2_pred = model2.predict(X2_test)
+
+# Evaluate the model
+mse2 = mean_squared_error(y2_test, y2_pred)
+r22 = r2_score(y2_test, y2_pred)
+
+print(f"Mean Squared Error: {mse2}")
+print(f"R-squared: {r22}")
+
+coeff_linreg2=model2.coef_[0]
+intercept_linreg2=model2.intercept_
+
+
+
+# Plot Grafik
+plt.figure(figsize=(10, 6))
+plt.scatter(y2_test, y2_pred, alpha=0.5)
+plt.plot([min(y2_test), max(y2_test)], [min(y2_test), max(y2_test)], color='red')
+
+plt.xlabel('Actual Close Price')
+plt.ylabel('Predicted Close Price')
+plt.title('Low')
+plt.grid(True)
+plt.show()
+
+
+
+# Model Regresi Linear Parameter Open
+X3 = dataset_fix[['open']]
+y3 = dataset_fix['close']
+
+
+# Split data into training and testing sets
+X3_train, X3_test, y3_train, y3_test = train_test_split(X3, y3, test_size=0.2, random_state=42)
+
+# Create and train the linear regression model
+model3 = LinearRegression()
+model3.fit(X3_train, y3_train)
+
+# Make predictions on the test set
+y3_pred = model3.predict(X3_test)
+
+# Evaluate the model
+mse3 = mean_squared_error(y3_test, y3_pred)
+r23 = r2_score(y3_test, y3_pred)
+
+print(f"Mean Squared Error: {mse3}")
+print(f"R-squared: {r23}")
+
+coeff_linreg3=model3.coef_[0]
+intercept_linreg3=model3.intercept_
+
+
+
+# Plot Grafik
+plt.figure(figsize=(10, 6))
+plt.scatter(y3_test, y3_pred, alpha=0.5)
+plt.plot([min(y3_test), max(y3_test)], [min(y3_test), max(y3_test)], color='red')
+
+plt.xlabel('Actual Close Price')
+plt.ylabel('Predicted Close Price')
+plt.title('Open')
+plt.grid(True)
+plt.show()
+
+
+
+# prompt: input user berupa tanggal dan buatkan prediksi close price satu minggu kemudian berdasarkan model regresi diatas
+
+import pandas as pd
+from datetime import datetime, timedelta
+
+def predict_close_price(dataset_fix, date_input, model1, model2, model3):
+    try:
+        # Mengonversi tanggal input ke format datetime
+        date_input = datetime.strptime(date_input, '%Y-%m-%d')
+
+        # Memprediksi harga penutupan satu minggu kemudian
+        next_week_date = date_input + timedelta(days=30)
+
+        # Pastikan tanggal input ada dalam dataset
+        if date_input.strftime('%Y-%m-%d') not in dataset_fix['Date'].dt.strftime('%Y-%m-%d').values:
+            return None, next_week_date, "Tanggal input tidak ditemukan dalam dataset."
+
+        predicted_close_high = model1.predict([[dataset_fix.loc[dataset_fix['Date'] == date_input.strftime('%Y-%m-%d'), 'high'].values[0]]])
+        predicted_close_low = model2.predict([[dataset_fix.loc[dataset_fix['Date'] == date_input.strftime('%Y-%m-%d'), 'low'].values[0]]])
+        predicted_close_open = model3.predict([[dataset_fix.loc[dataset_fix['Date'] == date_input.strftime('%Y-%m-%d'), 'open'].values[0]]])
+
+        # Rata-rata dari ketiga prediksi
+        predicted_close = (predicted_close_high[0] + predicted_close_low[0] + predicted_close_open[0]) / 3
+
+        return predicted_close, next_week_date, None
+
+    except ValueError:
+        return None, None, "Format tanggal salah. Gunakan YYYY-MM-DD."
+    except Exception as e:
+        return None, None, f"Terjadi kesalahan: {e}"
+
+# Input dari pengguna
+date_input = input("Masukkan tanggal (YYYY-MM-DD): ")
+# high_n = float(input("Masukkan nilai high: "))
+# low_n = float(input("Masukkan nilai low: "))
+# open_n = float(input("Masukkan nilai open: "))
+
+# Memanggil fungsi untuk memprediksi harga penutupan
+predicted_close, next_week_date, error_message = predict_close_price(dataset_fix, date_input, model1, model2, model3)
+
+# Menampilkan hasil
+if error_message:
+    print(error_message)
+else:
+    print(f"\nPrediksi harga penutupan pada {next_week_date.strftime('%Y-%m-%d')} adalah: {predicted_close:.2f}\n\n")
+
+
+
+# prompt: Buatkan grafik dari harga prediksi yang didapat dan harga awal
+
+    # Grafik perbandingan harga awal dan harga prediksi
+plt.figure(figsize=(10, 5))
+plt.plot(dataset_fix['Date'], dataset_fix['close'], label='Harga Penutupan Awal', color='blue')
+
+    # Menandai tanggal prediksi pada grafik
+plt.axvline(x=next_week_date, color='red', linestyle='--', label='Tanggal Prediksi')
+
+    # Menampilkan titik prediksi pada grafik
+plt.scatter(next_week_date, predicted_close, color='green', label='Prediksi Harga Penutupan')
+
+plt.title('Perbandingan Harga Penutupan Awal dan Prediksi')
+plt.xlabel('Tanggal')
+plt.ylabel('Harga')
+plt.legend()
+plt.grid(True)  # Menambahkan grid ke grafik
+plt.show()
